@@ -1,0 +1,74 @@
+// This block tells Prisma to generate standard JavaScript code we can use in our server
+generator client {
+  provider = "prisma-client-js"
+}
+
+// This block connects to your Supabase PostgreSQL database using the URL in your .env file
+datasource db {
+  provider = "postgresql"
+}
+
+// --- THE TABLES ---
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  name                   String
+  email                  String    @unique
+  phone                  String?
+  business_address       String?
+  payment_zelle_username String?
+  payment_venmo_link     String?
+  payment_cashapp_link   String?
+  
+  // A Contractor (User) can have many Clients
+  clients                Client[]
+}
+
+model Client {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  user             User      @relation(fields: [userId], references: [id])
+  name             String
+  street_address   String?
+  city_state_zip   String?
+  email            String?
+  phone            String?
+  
+  // A Client can have many Projects
+  projects         Project[]
+}
+
+model Project {
+  id                      Int            @id @default(autoincrement())
+  clientId                Int
+  client                  Client         @relation(fields: [clientId], references: [id])
+  status                  String         @default("Draft") // e.g., Draft, Estimate Sent, Approved, In Progress, Completed, Paid
+  issue_date              DateTime       @default(now())
+  valid_until_date        DateTime?
+  total_amount            Float          @default(0.0)
+  deposit_amount_required Float          @default(0.0)
+  project_summary_notes   String?
+  
+  // A Project has many Line Items and Images
+  line_items              LineItem[]
+  images                  ProjectImage[]
+}
+
+model LineItem {
+  id                        Int      @id @default(autoincrement())
+  projectId                 Int
+  project                   Project  @relation(fields: [projectId], references: [id])
+  type                      String   // "Labor" or "Material"
+  description               String
+  quantity                  Float    @default(1.0)
+  price_rate                Float
+  is_added_to_shopping_list Boolean  @default(false)
+}
+
+model ProjectImage {
+  id         Int      @id @default(autoincrement())
+  projectId  Int
+  project    Project  @relation(fields: [projectId], references: [id])
+  image_type String   // "Before", "After", "Sketch"
+  image_url  String
+}
