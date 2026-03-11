@@ -1,4 +1,5 @@
 require('dotenv').config();
+const cors = require('cors');
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
@@ -23,6 +24,7 @@ const supabase = createClient(
 // 3. File Upload Middleware (Mailroom)
 const upload = multer({ storage: multer.memoryStorage() });
 
+app.use(cors());
 app.use(express.json());
 
 // --- ROUTES ---
@@ -52,6 +54,16 @@ app.post('/api/clients', async (req, res) => {
         });
         res.status(201).json(newClient);
     } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// GET Route: Fetch all clients
+app.get('/api/clients', async (req, res) => {
+    try {
+        const clients = await prisma.client.findMany();
+        res.json(clients);
+    } catch (e) {
+        res.status(500).json({ error: "Could not fetch clients." });
+    }
 });
 
 // Create Project (The Estimate)
